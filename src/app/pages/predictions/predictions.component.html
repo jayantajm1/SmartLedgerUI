@@ -1,0 +1,50 @@
+<app-header title="Financial Predictions"></app-header>
+
+<div class="content">
+  <div class="dashboard-grid">
+    <!-- Spend Forecast Card -->
+    <div class="card prediction-card">
+      <div class="card-header">
+        <h3 class="card-title">Spend Forecast</h3>
+      </div>
+      <div class="card-value">{{ forecastAmount | currency }}</div>
+      <div style="color: rgba(255,255,255,0.8);">Next 30 days</div>
+      <div class="prediction-score">
+        <span>Confidence:</span>
+        <div class="confidence-bar">
+          <div class="confidence-fill" [style.width.%]="forecastConfidence"></div>
+        </div>
+        <span>{{ forecastConfidence }}%</span>
+      </div>
+    </div>
+
+    <!-- Upcoming Unpaid Invoices -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Upcoming Unpaid Invoices</h3>
+      </div>
+      <div class="card-value">{{ upcomingUnpaid }}</div>
+      <div class="card-change">Due in next 7 days</div>
+      <div class="prediction-score">
+        <span>Risk Level:</span>
+        <div class="confidence-bar">
+          <div
+            class="confidence-fill"
+            [style.width.%]="upcomingUnpaid * 15"
+            [style.background]="riskLevel === 'High' ? '#ef4444' : riskLevel === 'Medium' ? '#f59e0b' : '#10b981'"></div>
+        </div>
+        <span>{{ riskLevel }}</span>
+      </div>
+    </div>
+
+    <!-- Cash Flow Prediction Chart -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Cash Flow Prediction</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="predictionChart"></canvas>
+      </div>
+    </div>
+  </div>
+</div>

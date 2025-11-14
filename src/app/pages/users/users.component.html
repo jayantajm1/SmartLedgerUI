@@ -1,0 +1,89 @@
+<app-header title="Users Management"></app-header>
+
+<div class="content">
+  <!-- Header with Add Button -->
+  <div class="page-header">
+    <button class="btn btn-primary" (click)="openAddModal()">Add User</button>
+  </div>
+
+  <!-- Users Table -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Name</th>
+        <th>Email</th>
+        <th>Role</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="users.length === 0">
+        <td colspan="4" style="text-align: center; color: #64748b;">No users found</td>
+      </tr>
+      <tr *ngFor="let user of users">
+        <td>{{ user.name }}</td>
+        <td>{{ user.email }}</td>
+        <td>{{ user.role }}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" (click)="openEditModal(user)">Edit</button>
+          <button class="btn btn-danger btn-sm" (click)="deleteUser(user.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal -->
+<div class="modal" [class.active]="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ isEditing ? 'Edit User' : 'Add User' }}</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <form (ngSubmit)="saveUser()">
+      <div class="form-group">
+        <label class="form-label" for="name">Name</label>
+        <input
+          type="text"
+          class="form-input"
+          id="name"
+          [(ngModel)]="currentUser.name"
+          name="name"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input
+          type="email"
+          class="form-input"
+          id="email"
+          [(ngModel)]="currentUser.email"
+          name="email"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="role">Role</label>
+        <select
+          class="form-select"
+          id="role"
+          [(ngModel)]="currentUser.role"
+          name="role"
+          required>
+          <option value="Viewer">Viewer</option>
+          <option value="Accountant">Accountant</option>
+          <option value="Admin">Admin</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          {{ isEditing ? 'Update User' : 'Add User' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

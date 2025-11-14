@@ -1,0 +1,62 @@
+﻿<app-header title="Dashboard Overview"></app-header>
+
+<div class="content">
+  <div class="dashboard-grid">
+    <!-- Monthly Spend Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Monthly Spend</h3>
+      </div>
+      <div class="card-value">{{ monthlySpend | currency }}</div>
+      <div class="card-change">+12% from last month</div>
+      <div class="chart-container">
+        <canvas id="monthlyChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Inflow vs Outflow Card -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Inflow vs Outflow</h3>
+      </div>
+      <div class="chart-container">
+        <canvas id="inflowChart"></canvas>
+      </div>
+    </div>
+
+    <!-- Unpaid Invoices Alert -->
+    <div class="card alert-card">
+      <div class="card-header">
+        <h3 class="card-title">Unpaid Invoices</h3>
+        <span class="alert-badge">{{ overdueInvoices.length }}</span>
+      </div>
+      <div class="invoice-list">
+        <p *ngIf="overdueInvoices.length === 0">No overdue invoices</p>
+        <div *ngFor="let invoice of overdueInvoices" class="invoice-item">
+          <div class="invoice-info">
+            <div class="invoice-vendor">{{ invoice.vendor }}</div>
+            <div class="invoice-due">Due: {{ invoice.due_date | date }}</div>
+          </div>
+          <div class="invoice-amount">{{ invoice.amount | currency }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="card">
+      <div class="card-header">
+        <h3 class="card-title">Quick Stats</h3>
+      </div>
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
+        <div>
+          <div class="card-value" style="font-size: 24px;">{{ totalInvoices }}</div>
+          <div style="color: #64748b;">Total Invoices</div>
+        </div>
+        <div>
+          <div class="card-value" style="font-size: 24px;">{{ totalVendors }}</div>
+          <div style="color: #64748b;">Active Vendors</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

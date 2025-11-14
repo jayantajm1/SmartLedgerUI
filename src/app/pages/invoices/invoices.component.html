@@ -1,0 +1,141 @@
+<app-header title="Invoices Management"></app-header>
+
+<div class="content">
+  <!-- Header with Add Button -->
+  <div class="page-header">
+    <button class="btn btn-primary" (click)="openAddModal()">Add Invoice</button>
+  </div>
+
+  <!-- Search and Filter Bar -->
+  <div class="search-bar">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Search invoices..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="applyFilters()">
+
+    <select
+      class="form-select"
+      [(ngModel)]="statusFilter"
+      (ngModelChange)="applyFilters()"
+      style="width: auto;">
+      <option value="">All Status</option>
+      <option value="Paid">Paid</option>
+      <option value="Unpaid">Unpaid</option>
+    </select>
+
+    <button class="btn btn-secondary" (click)="sortByDate()">Sort by Date</button>
+  </div>
+
+  <!-- Invoices Table -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Invoice ID</th>
+        <th>Vendor</th>
+        <th>Amount</th>
+        <th>Due Date</th>
+        <th>Status</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="filteredInvoices.length === 0">
+        <td colspan="6" style="text-align: center; color: #64748b;">No invoices found</td>
+      </tr>
+      <tr *ngFor="let invoice of filteredInvoices">
+        <td>{{ invoice.invoice_id }}</td>
+        <td>{{ invoice.vendor }}</td>
+        <td>{{ invoice.amount | currency }}</td>
+        <td>{{ invoice.due_date | date }}</td>
+        <td>
+          <span class="status-badge" [ngClass]="'status-' + invoice.status.toLowerCase()">
+            {{ invoice.status }}
+          </span>
+        </td>
+        <td>
+          <button class="btn btn-secondary btn-sm" (click)="openEditModal(invoice)">Edit</button>
+          <button class="btn btn-danger btn-sm" (click)="deleteInvoice(invoice.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal -->
+<div class="modal" [class.active]="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ isEditing ? 'Edit Invoice' : 'Add Invoice' }}</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <form (ngSubmit)="saveInvoice()">
+      <div class="form-group">
+        <label class="form-label" for="invoice-id">Invoice ID</label>
+        <input
+          type="text"
+          class="form-input"
+          id="invoice-id"
+          [(ngModel)]="currentInvoice.invoice_id"
+          name="invoice_id"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="vendor">Vendor</label>
+        <input
+          type="text"
+          class="form-input"
+          id="vendor"
+          [(ngModel)]="currentInvoice.vendor"
+          name="vendor"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="amount">Amount</label>
+        <input
+          type="number"
+          class="form-input"
+          id="amount"
+          [(ngModel)]="currentInvoice.amount"
+          name="amount"
+          step="0.01"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="due-date">Due Date</label>
+        <input
+          type="date"
+          class="form-input"
+          id="due-date"
+          [(ngModel)]="currentInvoice.due_date"
+          name="due_date"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="status">Status</label>
+        <select
+          class="form-select"
+          id="status"
+          [(ngModel)]="currentInvoice.status"
+          name="status"
+          required>
+          <option value="Unpaid">Unpaid</option>
+          <option value="Paid">Paid</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          {{ isEditing ? 'Update Invoice' : 'Add Invoice' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

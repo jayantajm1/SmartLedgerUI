@@ -1,0 +1,118 @@
+<app-header title="Vendors Management"></app-header>
+
+<div class="content">
+  <!-- Header with Add Button -->
+  <div class="page-header">
+    <button class="btn btn-primary" (click)="openAddModal()">Add Vendor</button>
+  </div>
+
+  <!-- Search Bar -->
+  <div class="search-bar">
+    <input
+      type="text"
+      class="search-input"
+      placeholder="Search vendors..."
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="applyFilters()">
+  </div>
+
+  <!-- Vendors Table -->
+  <table class="table">
+    <thead>
+      <tr>
+        <th>Vendor Name</th>
+        <th>Contact</th>
+        <th>Email</th>
+        <th>GSTIN</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr *ngIf="filteredVendors.length === 0">
+        <td colspan="5" style="text-align: center; color: #64748b;">No vendors found</td>
+      </tr>
+      <tr *ngFor="let vendor of filteredVendors">
+        <td>{{ vendor.vendor_name }}</td>
+        <td>{{ vendor.contact }}</td>
+        <td>{{ vendor.email }}</td>
+        <td>{{ vendor.gstin || 'N/A' }}</td>
+        <td>
+          <button class="btn btn-secondary btn-sm" (click)="openEditModal(vendor)">Edit</button>
+          <button class="btn btn-danger btn-sm" (click)="deleteVendor(vendor.id)">Delete</button>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- Modal -->
+<div class="modal" [class.active]="showModal" (click)="closeModal()">
+  <div class="modal-content" (click)="$event.stopPropagation()">
+    <div class="modal-header">
+      <h2 class="modal-title">{{ isEditing ? 'Edit Vendor' : 'Add Vendor' }}</h2>
+      <button class="close-btn" (click)="closeModal()">×</button>
+    </div>
+
+    <form (ngSubmit)="saveVendor()">
+      <div class="form-group">
+        <label class="form-label" for="vendor-name">Vendor Name</label>
+        <input
+          type="text"
+          class="form-input"
+          id="vendor-name"
+          [(ngModel)]="currentVendor.vendor_name"
+          name="vendor_name"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="contact">Contact</label>
+        <input
+          type="text"
+          class="form-input"
+          id="contact"
+          [(ngModel)]="currentVendor.contact"
+          name="contact"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="email">Email</label>
+        <input
+          type="email"
+          class="form-input"
+          id="email"
+          [(ngModel)]="currentVendor.email"
+          name="email"
+          required>
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="gstin">GSTIN</label>
+        <input
+          type="text"
+          class="form-input"
+          id="gstin"
+          [(ngModel)]="currentVendor.gstin"
+          name="gstin">
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="address">Address</label>
+        <textarea
+          class="form-input"
+          id="address"
+          [(ngModel)]="currentVendor.address"
+          name="address"
+          rows="3"></textarea>
+      </div>
+
+      <div class="form-actions">
+        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
+        <button type="submit" class="btn btn-primary">
+          {{ isEditing ? 'Update Vendor' : 'Add Vendor' }}
+        </button>
+      </div>
+    </form>
+  </div>
+</div>

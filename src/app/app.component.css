@@ -1,0 +1,12 @@
+﻿.app-container {
+  display: flex;
+  height: 100vh;
+  min-height: 100vh;
+}
+
+.main-content {
+  flex: 1;
+  overflow-y: auto;
+  background: #f8fafc;
+  margin-left: 280px;
+}
