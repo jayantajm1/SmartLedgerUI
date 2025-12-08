@@ -1,5 +1,6 @@
 import { Injectable } from '@angular/core';
 import { BehaviorSubject, Observable } from 'rxjs';
+import { BrowserStorageService } from './browser-storage.service';
 
 @Injectable({
   providedIn: 'root',
@@ -10,15 +11,15 @@ export class AuthStateService {
   private isAuthenticatedSubject: BehaviorSubject<boolean>;
   public isAuthenticated: Observable<boolean>;
 
-  constructor() {
-    const storedUser = localStorage.getItem('currentUser');
+  constructor(private storage: BrowserStorageService) {
+    const storedUser = this.storage.getItem('currentUser');
     this.currentUserSubject = new BehaviorSubject<any>(
       storedUser ? JSON.parse(storedUser) : null
     );
     this.currentUser = this.currentUserSubject.asObservable();
 
     this.isAuthenticatedSubject = new BehaviorSubject<boolean>(
-      !!localStorage.getItem('authToken')
+      !!this.storage.getItem('authToken')
     );
     this.isAuthenticated = this.isAuthenticatedSubject.asObservable();
   }
@@ -32,23 +33,23 @@ export class AuthStateService {
   }
 
   public setUser(user: any): void {
-    localStorage.setItem('currentUser', JSON.stringify(user));
+    this.storage.setItem('currentUser', JSON.stringify(user));
     this.currentUserSubject.next(user);
   }
 
   public setToken(token: string): void {
-    localStorage.setItem('authToken', token);
+    this.storage.setItem('authToken', token);
     this.isAuthenticatedSubject.next(true);
   }
 
   public logout(): void {
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('currentUser');
+    this.storage.removeItem('authToken');
+    this.storage.removeItem('currentUser');
     this.currentUserSubject.next(null);
     this.isAuthenticatedSubject.next(false);
   }
 
   public getToken(): string | null {
-    return localStorage.getItem('authToken');
+    return this.storage.getItem('authToken');
   }
 }

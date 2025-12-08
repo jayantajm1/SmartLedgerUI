@@ -2,6 +2,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { firstValueFrom, timeout, catchError, of } from 'rxjs';
 import { environment } from '../../environments/environment';
+import { BrowserStorageService } from './browser-storage.service';
 
 @Injectable({
   providedIn: 'root',
@@ -9,7 +10,10 @@ import { environment } from '../../environments/environment';
 export class ApiConfigService {
   private detectedApiUrl: string | null = null;
 
-  constructor(private http: HttpClient) {}
+  constructor(
+    private http: HttpClient,
+    private storage: BrowserStorageService
+  ) {}
 
   /**
    * Detects which backend API URL is available by trying each URL in order
@@ -43,7 +47,7 @@ export class ApiConfigService {
         if (response && response.status === 200) {
           this.detectedApiUrl = apiUrl;
           console.log(`✅ Backend found at: ${apiUrl}`);
-          localStorage.setItem('detectedApiUrl', apiUrl);
+          this.storage.setItem('detectedApiUrl', apiUrl);
           return apiUrl;
         }
       } catch (error) {
@@ -64,7 +68,7 @@ export class ApiConfigService {
   getApiUrl(): string {
     return (
       this.detectedApiUrl ||
-      localStorage.getItem('detectedApiUrl') ||
+      this.storage.getItem('detectedApiUrl') ||
       environment.apiUrl
     );
   }
@@ -74,6 +78,6 @@ export class ApiConfigService {
    */
   resetDetection(): void {
     this.detectedApiUrl = null;
-    localStorage.removeItem('detectedApiUrl');
+    this.storage.removeItem('detectedApiUrl');
   }
 }
