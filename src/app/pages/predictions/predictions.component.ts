@@ -1,40 +1,66 @@
-﻿import { Component, OnInit, AfterViewInit, OnDestroy, PLATFORM_ID, Inject } from "@angular/core";
-import { isPlatformBrowser } from "@angular/common";
-import { CommonModule } from "@angular/common";
-import { HeaderComponent } from "../../components/header/header.component";
-import { DataService } from "../../services/data.service";
-import { Chart, registerables } from "chart.js";
-import { Subscription } from "rxjs";
+﻿import {
+  Component,
+  OnInit,
+  AfterViewInit,
+  OnDestroy,
+  PLATFORM_ID,
+  Inject,
+} from '@angular/core';
+import { isPlatformBrowser } from '@angular/common';
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';
+import { HeaderComponent } from '../../components/header/header.component';
+import { CashflowPredictionService } from '../../api/api/cashflowPrediction.service';
+import { AuthStateService } from '../../services/auth-state.service';
+import { CashflowPrediction } from '../../api/model/cashflowPrediction';
+import { Chart, registerables } from 'chart.js';
+import { Subscription } from 'rxjs';
 
 Chart.register(...registerables);
 
 @Component({
-  selector: "app-predictions",
+  selector: 'app-predictions',
   standalone: true,
-  imports: [CommonModule, HeaderComponent],
-  templateUrl: "./predictions.component.html",
-  styleUrls: ["./predictions.component.css"]
+  imports: [CommonModule, HeaderComponent, FormsModule],
+  templateUrl: './predictions.component.html',
+  styleUrls: ['./predictions.component.css'],
 })
 export class PredictionsComponent implements OnInit, AfterViewInit, OnDestroy {
+  predictions: CashflowPrediction[] = [];
+  currentPrediction: CashflowPrediction | null = null;
   forecastAmount: number = 0;
-  upcomingUnpaid: number = 0;
-  forecastConfidence: number = 85;
-  riskLevel: string = "Medium";
+  forecastConfidence: number = 0;
+  projectedInflow: number = 0;
+  projectedOutflow: number = 0;
+  netCashflow: number = 0;
+  riskLevel: string = 'Low';
+
+  isLoading: boolean = false;
+  error: string | null = null;
+  successMessage: string | null = null;
+
+  orgId: string | null = null;
+  selectedYear: number = new Date().getFullYear();
+  selectedMonth: number = new Date().getMonth() + 1;
 
   private predictionChart: any;
   private subscription?: Subscription;
   private isBrowser: boolean;
 
   constructor(
-    private dataService: DataService,
+    private cashflowService: CashflowPredictionService,
+    private authStateService: AuthStateService,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
   }
 
   ngOnInit(): void {
-    this.subscription = this.dataService.invoices$.subscribe(() => {
-      this.updatePredictions();
+    this.subscription = this.authStateService.currentUser.subscribe((user) => {
+      if (user && user.orgId) {
+        this.orgId = user.orgId;
+        this.loadPredictions();
+      }
     });
   }
 
@@ -42,8 +68,9 @@ export class PredictionsComponent implements OnInit, AfterViewInit, OnDestroy {
     if (!this.isBrowser) return;
 
     setTimeout(() => {
-      this.initializeChart();
-      this.updatePredictions();
+      if (this.predictions.length > 0) {
+        this.initializeChart();
+      }
     }, 100);
   }
 
@@ -57,67 +84,172 @@ export class PredictionsComponent implements OnInit, AfterViewInit, OnDestroy {
   private initializeChart(): void {
     if (!this.isBrowser) return;
 
-    const predictionCtx = document.getElementById("predictionChart") as HTMLCanvasElement;
+    const predictionCtx = document.getElementById(
+      'predictionChart'
+    ) as HTMLCanvasElement;
     if (predictionCtx) {
+      const labels = this.predictions.map((p) => p.month || '');
+      const inflowData = this.predictions.map((p) => p.projectedInflow || 0);
+      const outflowData = this.predictions.map((p) => p.projectedOutflow || 0);
+
       this.predictionChart = new Chart(predictionCtx, {
-        type: "line",
+        type: 'line',
         data: {
-          labels: ["Week 1", "Week 2", "Week 3", "Week 4"],
-          datasets: [{
-            label: "Predicted Cash Flow",
-            data: [15000, 18000, 22000, 25000],
-            borderColor: "#8b5cf6",
-            backgroundColor: "rgba(139, 92, 246, 0.1)",
-            tension: 0.4,
-            fill: true,
-            borderDash: [5, 5]
-          }]
+          labels: labels,
+          datasets: [
+            {
+              label: 'Projected Inflow',
+              data: inflowData,
+              borderColor: '#10b981',
+              backgroundColor: 'rgba(16, 185, 129, 0.1)',
+              tension: 0.4,
+              fill: true,
+            },
+            {
+              label: 'Projected Outflow',
+              data: outflowData,
+              borderColor: '#ef4444',
+              backgroundColor: 'rgba(239, 68, 68, 0.1)',
+              tension: 0.4,
+              fill: true,
+            },
+          ],
         },
         options: {
           responsive: true,
           maintainAspectRatio: false,
           plugins: {
             legend: {
-              display: false
-            }
+              display: true,
+              position: 'top',
+            },
           },
           scales: {
             y: {
               beginAtZero: true,
               ticks: {
-                callback: function(value) {
-                  return "$" + value.toLocaleString();
-                }
-              }
-            }
-          }
-        }
+                callback: function (value) {
+                  return '$' + value.toLocaleString();
+                },
+              },
+            },
+          },
+        },
       });
     }
   }
 
-  private updatePredictions(): void {
-    const invoices = this.dataService.getInvoices();
-
-    // Calculate forecast based on historical data
-    const avgMonthlySpend = invoices.reduce((sum, inv) => sum + inv.amount, 0) /
-                            Math.max(1, invoices.length) * 30;
-    this.forecastAmount = Math.round(avgMonthlySpend);
-
-    // Calculate upcoming unpaid invoices
-    const nextWeek = new Date();
-    nextWeek.setDate(nextWeek.getDate() + 7);
-    this.upcomingUnpaid = invoices.filter(inv =>
-      inv.status === "Unpaid" && new Date(inv.due_date) <= nextWeek
-    ).length;
-
-    // Adjust risk level based on unpaid invoices
-    if (this.upcomingUnpaid > 5) {
-      this.riskLevel = "High";
-    } else if (this.upcomingUnpaid > 2) {
-      this.riskLevel = "Medium";
-    } else {
-      this.riskLevel = "Low";
+  loadPredictions(): void {
+    if (!this.orgId) {
+      this.error = 'Organization ID not found.';
+      return;
     }
+
+    this.isLoading = true;
+    this.error = null;
+
+    this.cashflowService.apiCashflowPredictionOrgIdGet(this.orgId).subscribe({
+      next: (data: any) => {
+        this.predictions = data || [];
+        if (this.predictions.length > 0) {
+          this.currentPrediction = this.predictions[0];
+          this.updateMetrics();
+          if (this.isBrowser) {
+            setTimeout(() => this.initializeChart(), 100);
+          }
+        }
+        this.isLoading = false;
+      },
+      error: (err) => {
+        console.error('Error loading predictions:', err);
+        this.error = 'Failed to load cashflow predictions.';
+        this.isLoading = false;
+      },
+    });
+  }
+
+  loadPredictionByMonth(): void {
+    if (!this.orgId) {
+      this.error = 'Organization ID not found.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.error = null;
+
+    this.cashflowService
+      .apiCashflowPredictionOrgIdYearMonthGet(
+        this.orgId,
+        this.selectedYear,
+        this.selectedMonth
+      )
+      .subscribe({
+        next: (data: any) => {
+          this.currentPrediction = data;
+          this.updateMetrics();
+          this.isLoading = false;
+        },
+        error: (err) => {
+          console.error('Error loading prediction for month:', err);
+          this.error = 'Failed to load prediction for selected month.';
+          this.isLoading = false;
+        },
+      });
+  }
+
+  generatePredictions(): void {
+    if (!this.orgId) {
+      this.error = 'Organization ID not found.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.error = null;
+
+    this.cashflowService
+      .apiCashflowPredictionGenerateOrgIdPost(this.orgId)
+      .subscribe({
+        next: () => {
+          this.successMessage = 'Cashflow predictions generated successfully!';
+          this.loadPredictions();
+          setTimeout(() => (this.successMessage = null), 3000);
+        },
+        error: (err) => {
+          console.error('Error generating predictions:', err);
+          this.error = 'Failed to generate predictions. Please try again.';
+          this.isLoading = false;
+        },
+      });
+  }
+
+  private updateMetrics(): void {
+    if (this.currentPrediction) {
+      this.projectedInflow = this.currentPrediction.projectedInflow || 0;
+      this.projectedOutflow = this.currentPrediction.projectedOutflow || 0;
+      this.netCashflow = this.projectedInflow - this.projectedOutflow;
+      this.forecastConfidence = this.currentPrediction.confidence || 0;
+      this.forecastAmount = Math.abs(this.netCashflow);
+
+      // Calculate risk level based on net cashflow
+      if (this.netCashflow < 0) {
+        this.riskLevel = 'High';
+      } else if (this.netCashflow < this.projectedInflow * 0.2) {
+        this.riskLevel = 'Medium';
+      } else {
+        this.riskLevel = 'Low';
+      }
+    }
+  }
+
+  onYearChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.selectedYear = parseInt(target.value);
+    this.loadPredictionByMonth();
+  }
+
+  onMonthChange(event: Event): void {
+    const target = event.target as HTMLSelectElement;
+    this.selectedMonth = parseInt(target.value);
+    this.loadPredictionByMonth();
   }
 }

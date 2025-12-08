@@ -5,6 +5,7 @@ import { VendorsComponent } from './pages/vendors/vendors.component';
 import { UsersComponent } from './pages/users/users.component';
 import { PredictionsComponent } from './pages/predictions/predictions.component';
 import { OrganizationsComponent } from './pages/organizations/organizations.component';
+import { PaymentsComponent } from './pages/payments/payments.component';
 import { LoginComponent } from './pages/login/login.component';
 import { RegisterComponent } from './pages/register/register.component';
 import { authGuard } from './guards/auth.guard';
@@ -19,6 +20,7 @@ export const routes: Routes = [
     canActivate: [authGuard],
   },
   { path: 'invoices', component: InvoicesComponent, canActivate: [authGuard] },
+  { path: 'payments', component: PaymentsComponent, canActivate: [authGuard] },
   { path: 'vendors', component: VendorsComponent, canActivate: [authGuard] },
   { path: 'users', component: UsersComponent, canActivate: [authGuard] },
   {

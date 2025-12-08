@@ -1,46 +1,144 @@
-<app-header title="Financial Predictions"></app-header>
+<app-header title="Cashflow Predictions"></app-header>
 
 <div class="content">
+  <!-- Success/Error Messages -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    {{ successMessage }}
+  </div>
+  <div *ngIf="error" class="alert alert-danger">
+    {{ error }}
+  </div>
+
+  <!-- Loading Indicator -->
+  <div *ngIf="isLoading" class="loading">Loading predictions...</div>
+
+  <!-- Actions Bar -->
+  <div class="actions-bar">
+    <button
+      class="btn btn-primary"
+      (click)="generatePredictions()"
+      [disabled]="isLoading"
+    >
+      Generate New Predictions
+    </button>
+
+    <div class="date-selectors">
+      <select
+        class="form-select"
+        [(ngModel)]="selectedYear"
+        (change)="onYearChange($event)"
+      >
+        <option [value]="2024">2024</option>
+        <option [value]="2025">2025</option>
+        <option [value]="2026">2026</option>
+      </select>
+
+      <select
+        class="form-select"
+        [(ngModel)]="selectedMonth"
+        (change)="onMonthChange($event)"
+      >
+        <option [value]="1">January</option>
+        <option [value]="2">February</option>
+        <option [value]="3">March</option>
+        <option [value]="4">April</option>
+        <option [value]="5">May</option>
+        <option [value]="6">June</option>
+        <option [value]="7">July</option>
+        <option [value]="8">August</option>
+        <option [value]="9">September</option>
+        <option [value]="10">October</option>
+        <option [value]="11">November</option>
+        <option [value]="12">December</option>
+      </select>
+    </div>
+  </div>
+
   <div class="dashboard-grid">
-    <!-- Spend Forecast Card -->
-    <div class="card prediction-card">
+    <!-- Projected Inflow Card -->
+    <div class="card inflow-card">
       <div class="card-header">
-        <h3 class="card-title">Spend Forecast</h3>
+        <h3 class="card-title">Projected Inflow</h3>
       </div>
-      <div class="card-value">{{ forecastAmount | currency }}</div>
-      <div style="color: rgba(255,255,255,0.8);">Next 30 days</div>
+      <div class="card-value">{{ projectedInflow | currency }}</div>
+      <div class="card-subtitle">Expected incoming cash</div>
+    </div>
+
+    <!-- Projected Outflow Card -->
+    <div class="card outflow-card">
+      <div class="card-header">
+        <h3 class="card-title">Projected Outflow</h3>
+      </div>
+      <div class="card-value">{{ projectedOutflow | currency }}</div>
+      <div class="card-subtitle">Expected outgoing cash</div>
+    </div>
+
+    <!-- Net Cashflow Card -->
+    <div
+      class="card"
+      [ngClass]="netCashflow >= 0 ? 'inflow-card' : 'outflow-card'"
+    >
+      <div class="card-header">
+        <h3 class="card-title">Net Cashflow</h3>
+      </div>
+      <div class="card-value">{{ netCashflow | currency }}</div>
+      <div class="card-subtitle">
+        {{ netCashflow >= 0 ? "Positive" : "Negative" }} balance
+      </div>
       <div class="prediction-score">
         <span>Confidence:</span>
         <div class="confidence-bar">
-          <div class="confidence-fill" [style.width.%]="forecastConfidence"></div>
+          <div
+            class="confidence-fill"
+            [style.width.%]="forecastConfidence"
+          ></div>
         </div>
         <span>{{ forecastConfidence }}%</span>
       </div>
     </div>
 
-    <!-- Upcoming Unpaid Invoices -->
+    <!-- Risk Level Card -->
     <div class="card">
       <div class="card-header">
-        <h3 class="card-title">Upcoming Unpaid Invoices</h3>
+        <h3 class="card-title">Risk Assessment</h3>
       </div>
-      <div class="card-value">{{ upcomingUnpaid }}</div>
-      <div class="card-change">Due in next 7 days</div>
+      <div
+        class="card-value risk-value"
+        [style.color]="
+          riskLevel === 'High'
+            ? '#ef4444'
+            : riskLevel === 'Medium'
+            ? '#f59e0b'
+            : '#10b981'
+        "
+      >
+        {{ riskLevel }}
+      </div>
+      <div class="card-subtitle">Financial risk level</div>
       <div class="prediction-score">
-        <span>Risk Level:</span>
+        <span>Risk Indicator:</span>
         <div class="confidence-bar">
           <div
             class="confidence-fill"
-            [style.width.%]="upcomingUnpaid * 15"
-            [style.background]="riskLevel === 'High' ? '#ef4444' : riskLevel === 'Medium' ? '#f59e0b' : '#10b981'"></div>
+            [style.width.%]="
+              riskLevel === 'High' ? 100 : riskLevel === 'Medium' ? 60 : 30
+            "
+            [style.background]="
+              riskLevel === 'High'
+                ? '#ef4444'
+                : riskLevel === 'Medium'
+                ? '#f59e0b'
+                : '#10b981'
+            "
+          ></div>
         </div>
-        <span>{{ riskLevel }}</span>
       </div>
     </div>
 
     <!-- Cash Flow Prediction Chart -->
-    <div class="card">
+    <div class="card chart-card">
       <div class="card-header">
-        <h3 class="card-title">Cash Flow Prediction</h3>
+        <h3 class="card-title">Cashflow Trends</h3>
       </div>
       <div class="chart-container">
         <canvas id="predictionChart"></canvas>

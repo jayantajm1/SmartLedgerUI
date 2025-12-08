@@ -13,6 +13,7 @@ export class SidebarComponent {
   menuItems = [
     { path: '/dashboard', icon: 'dashboard', label: 'Dashboard' },
     { path: '/invoices', icon: 'invoice', label: 'Invoices' },
+    { path: '/payments', icon: 'payments', label: 'Payments' },
     { path: '/vendors', icon: 'vendors', label: 'Vendors' },
     { path: '/users', icon: 'users', label: 'Users' },
     { path: '/organizations', icon: 'organizations', label: 'Organizations' },
