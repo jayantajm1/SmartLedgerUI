@@ -7,7 +7,7 @@ import { Router, RouterModule } from '@angular/router';
   standalone: true,
   imports: [CommonModule, RouterModule],
   templateUrl: './sidebar.component.html',
-  styleUrls: ['./sidebar.component.css']
+  styleUrls: ['./sidebar.component.css'],
 })
 export class SidebarComponent {
   menuItems = [
@@ -15,7 +15,8 @@ export class SidebarComponent {
     { path: '/invoices', icon: 'invoice', label: 'Invoices' },
     { path: '/vendors', icon: 'vendors', label: 'Vendors' },
     { path: '/users', icon: 'users', label: 'Users' },
-    { path: '/predictions', icon: 'predictions', label: 'Predictions' }
+    { path: '/organizations', icon: 'organizations', label: 'Organizations' },
+    { path: '/predictions', icon: 'predictions', label: 'Predictions' },
   ];
 
   constructor(public router: Router) {}

@@ -3,7 +3,33 @@
 <div class="content">
   <!-- Header with Add Button -->
   <div class="page-header">
-    <button class="btn btn-primary" (click)="openAddModal()">Add Vendor</button>
+    <button
+      class="btn btn-primary"
+      (click)="openAddModal()"
+      [disabled]="isLoading"
+    >
+      Add Vendor
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div *ngIf="isLoading" class="loading">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div *ngIf="error" class="alert alert-error">
+    <span class="icon">⚠️</span>
+    {{ error }}
+    <button class="close-btn" (click)="error = null">×</button>
+  </div>
+
+  <!-- Success Message -->
+  <div *ngIf="successMessage" class="alert alert-success">
+    <span class="icon">✓</span>
+    {{ successMessage }}
+    <button class="close-btn" (click)="successMessage = null">×</button>
   </div>
 
   <!-- Search Bar -->
@@ -11,108 +37,243 @@
     <input
       type="text"
       class="search-input"
-      placeholder="Search vendors..."
+      placeholder="Search vendors by name, email, or phone..."
       [(ngModel)]="searchTerm"
-      (ngModelChange)="applyFilters()">
+      (ngModelChange)="applyFilters()"
+    />
   </div>
 
   <!-- Vendors Table -->
-  <table class="table">
+  <table class="table" *ngIf="!isLoading">
     <thead>
       <tr>
         <th>Vendor Name</th>
-        <th>Contact</th>
         <th>Email</th>
-        <th>GSTIN</th>
+        <th>Phone</th>
+        <th>Category</th>
         <th>Actions</th>
       </tr>
     </thead>
     <tbody>
       <tr *ngIf="filteredVendors.length === 0">
-        <td colspan="5" style="text-align: center; color: #64748b;">No vendors found</td>
+        <td colspan="5" style="text-align: center; color: #64748b">
+          No vendors found
+        </td>
       </tr>
       <tr *ngFor="let vendor of filteredVendors">
-        <td>{{ vendor.vendor_name }}</td>
-        <td>{{ vendor.contact }}</td>
+        <td>{{ vendor.name }}</td>
         <td>{{ vendor.email }}</td>
-        <td>{{ vendor.gstin || 'N/A' }}</td>
+        <td>{{ vendor.phone || "N/A" }}</td>
+        <td>{{ vendor.category || "N/A" }}</td>
         <td>
-          <button class="btn btn-secondary btn-sm" (click)="openEditModal(vendor)">Edit</button>
-          <button class="btn btn-danger btn-sm" (click)="deleteVendor(vendor.id)">Delete</button>
+          <button
+            class="btn btn-info btn-sm"
+            (click)="viewVendorDetails(vendor.id!)"
+            [disabled]="isLoading"
+          >
+            View
+          </button>
+          <button
+            class="btn btn-secondary btn-sm"
+            (click)="openEditModal(vendor)"
+            [disabled]="isLoading"
+          >
+            Edit
+          </button>
+          <button
+            class="btn btn-danger btn-sm"
+            (click)="deleteVendor(vendor.id!)"
+            [disabled]="isLoading"
+          >
+            Delete
+          </button>
         </td>
       </tr>
     </tbody>
   </table>
 </div>
 
-<!-- Modal -->
+<!-- Create/Edit Modal -->
 <div class="modal" [class.active]="showModal" (click)="closeModal()">
   <div class="modal-content" (click)="$event.stopPropagation()">
     <div class="modal-header">
-      <h2 class="modal-title">{{ isEditing ? 'Edit Vendor' : 'Add Vendor' }}</h2>
+      <h2 class="modal-title">
+        {{ isEditing ? "Edit Vendor" : "Add Vendor" }}
+      </h2>
       <button class="close-btn" (click)="closeModal()">×</button>
     </div>
 
+    <!-- Error in Modal -->
+    <div *ngIf="error" class="alert alert-error" style="margin: 15px">
+      <span class="icon">⚠️</span>
+      {{ error }}
+    </div>
+
     <form (ngSubmit)="saveVendor()">
+      <div class="form-group" *ngIf="!isEditing">
+        <label class="form-label" for="organization">Organization *</label>
+        <select
+          class="form-input"
+          id="organization"
+          [(ngModel)]="selectedOrgId"
+          name="organization"
+          required
+          [disabled]="isLoadingOrganizations"
+        >
+          <option value="" disabled>
+            {{
+              isLoadingOrganizations
+                ? "Loading organizations..."
+                : "Select an organization"
+            }}
+          </option>
+          <option *ngFor="let org of organizations" [value]="org.id">
+            {{ org.name }}
+          </option>
+        </select>
+      </div>
+
       <div class="form-group">
-        <label class="form-label" for="vendor-name">Vendor Name</label>
+        <label class="form-label" for="vendor-name">Vendor Name *</label>
         <input
           type="text"
           class="form-input"
           id="vendor-name"
-          [(ngModel)]="currentVendor.vendor_name"
-          name="vendor_name"
-          required>
+          [(ngModel)]="currentVendor.name"
+          name="name"
+          required
+          placeholder="Enter vendor name"
+        />
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="contact">Contact</label>
-        <input
-          type="text"
-          class="form-input"
-          id="contact"
-          [(ngModel)]="currentVendor.contact"
-          name="contact"
-          required>
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="email">Email</label>
+        <label class="form-label" for="email">Email *</label>
         <input
           type="email"
           class="form-input"
           id="email"
           [(ngModel)]="currentVendor.email"
           name="email"
-          required>
+          required
+          placeholder="vendor@example.com"
+        />
       </div>
 
       <div class="form-group">
-        <label class="form-label" for="gstin">GSTIN</label>
+        <label class="form-label" for="phone">Phone</label>
+        <input
+          type="tel"
+          class="form-input"
+          id="phone"
+          [(ngModel)]="currentVendor.phone"
+          name="phone"
+          placeholder="+1 (555) 000-0000"
+        />
+      </div>
+
+      <div class="form-group">
+        <label class="form-label" for="category">Category</label>
         <input
           type="text"
           class="form-input"
-          id="gstin"
-          [(ngModel)]="currentVendor.gstin"
-          name="gstin">
-      </div>
-
-      <div class="form-group">
-        <label class="form-label" for="address">Address</label>
-        <textarea
-          class="form-input"
-          id="address"
-          [(ngModel)]="currentVendor.address"
-          name="address"
-          rows="3"></textarea>
+          id="category"
+          [(ngModel)]="currentVendor.category"
+          name="category"
+          placeholder="e.g., Supplier, Service Provider"
+        />
       </div>
 
       <div class="form-actions">
-        <button type="button" class="btn btn-secondary" (click)="closeModal()">Cancel</button>
-        <button type="submit" class="btn btn-primary">
-          {{ isEditing ? 'Update Vendor' : 'Add Vendor' }}
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="closeModal()"
+          [disabled]="isLoading"
+        >
+          Cancel
+        </button>
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          {{
+            isLoading ? "Saving..." : isEditing ? "Update Vendor" : "Add Vendor"
+          }}
         </button>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Vendor Details Modal -->
+<div
+  class="modal"
+  [class.active]="showDetailsModal"
+  (click)="closeDetailsModal()"
+>
+  <div
+    class="modal-content"
+    (click)="$event.stopPropagation()"
+    *ngIf="selectedVendor"
+  >
+    <div class="modal-header">
+      <h2 class="modal-title">Vendor Details</h2>
+      <button class="close-btn" (click)="closeDetailsModal()">×</button>
+    </div>
+
+    <div class="details-body">
+      <div class="detail-row">
+        <span class="label">ID:</span>
+        <span class="value">{{ selectedVendor.id }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Name:</span>
+        <span class="value">{{ selectedVendor.name }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Email:</span>
+        <span class="value">{{ selectedVendor.email }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Phone:</span>
+        <span class="value">{{ selectedVendor.phone || "Not provided" }}</span>
+      </div>
+      <div class="detail-row">
+        <span class="label">Category:</span>
+        <span class="value">{{
+          selectedVendor.category || "Not provided"
+        }}</span>
+      </div>
+      <div class="detail-row" *ngIf="selectedVendor.createdAt">
+        <span class="label">Created At:</span>
+        <span class="value">{{
+          selectedVendor.createdAt | date : "medium"
+        }}</span>
+      </div>
+      <div
+        class="detail-row"
+        *ngIf="selectedVendor.invoices && selectedVendor.invoices.length > 0"
+      >
+        <span class="label">Total Invoices:</span>
+        <span class="value">{{ selectedVendor.invoices.length }}</span>
+      </div>
+    </div>
+
+    <div
+      class="form-actions"
+      style="padding: 15px; border-top: 1px solid #e5e7eb"
+    >
+      <button
+        type="button"
+        class="btn btn-primary"
+        (click)="openEditModal(selectedVendor); closeDetailsModal()"
+      >
+        Edit Vendor
+      </button>
+      <button
+        type="button"
+        class="btn btn-secondary"
+        (click)="closeDetailsModal()"
+      >
+        Close
+      </button>
+    </div>
   </div>
 </div>

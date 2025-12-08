@@ -1,0 +1,304 @@
+<div class="organizations-container">
+  <div class="header">
+    <h1>Organizations Management</h1>
+    <button
+      class="btn btn-primary"
+      (click)="openCreateForm()"
+      *ngIf="!showCreateForm && !showEditForm"
+    >
+      <span class="icon">+</span> Create Organization
+    </button>
+  </div>
+
+  <!-- Loading State -->
+  <div class="loading" *ngIf="isLoading">
+    <div class="spinner"></div>
+    <p>Loading...</p>
+  </div>
+
+  <!-- Error Message -->
+  <div class="alert alert-error" *ngIf="error">
+    <span class="icon">⚠️</span>
+    {{ error }}
+    <button class="close-btn" (click)="error = null">×</button>
+  </div>
+
+  <!-- Success Message -->
+  <div class="alert alert-success" *ngIf="successMessage">
+    <span class="icon">✓</span>
+    {{ successMessage }}
+    <button class="close-btn" (click)="successMessage = null">×</button>
+  </div>
+
+  <!-- Create Organization Form -->
+  <div class="form-container" *ngIf="showCreateForm">
+    <h2>Create New Organization</h2>
+    <form (ngSubmit)="createOrganization()">
+      <div class="form-group">
+        <label for="name">Organization Name *</label>
+        <input
+          type="text"
+          id="name"
+          [(ngModel)]="newOrganization.name"
+          name="name"
+          required
+          placeholder="Enter organization name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="industry">Industry</label>
+        <input
+          type="text"
+          id="industry"
+          [(ngModel)]="newOrganization.industry"
+          name="industry"
+          placeholder="e.g., Technology, Finance, Healthcare"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="gstNumber">GST Number</label>
+        <input
+          type="text"
+          id="gstNumber"
+          [(ngModel)]="newOrganization.gstNumber"
+          name="gstNumber"
+          placeholder="Enter GST number"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="country">Country</label>
+        <input
+          type="text"
+          id="country"
+          [(ngModel)]="newOrganization.country"
+          name="country"
+          placeholder="Enter country"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="plan">Plan</label>
+        <select id="plan" [(ngModel)]="newOrganization.plan" name="plan">
+          <option value="">Select a plan</option>
+          <option value="Free">Free</option>
+          <option value="Basic">Basic</option>
+          <option value="Pro">Pro</option>
+          <option value="Enterprise">Enterprise</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          {{ isLoading ? "Creating..." : "Create Organization" }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="cancelForm()"
+          [disabled]="isLoading"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Edit Organization Form -->
+  <div class="form-container" *ngIf="showEditForm && selectedOrganization">
+    <h2>Edit Organization</h2>
+    <form (ngSubmit)="updateOrganization()">
+      <div class="form-group">
+        <label for="editName">Organization Name *</label>
+        <input
+          type="text"
+          id="editName"
+          [(ngModel)]="editOrganization.name"
+          name="editName"
+          required
+          placeholder="Enter organization name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="editIndustry">Industry</label>
+        <input
+          type="text"
+          id="editIndustry"
+          [(ngModel)]="editOrganization.industry"
+          name="editIndustry"
+          placeholder="e.g., Technology, Finance, Healthcare"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="editGstNumber">GST Number</label>
+        <input
+          type="text"
+          id="editGstNumber"
+          [(ngModel)]="editOrganization.gstNumber"
+          name="editGstNumber"
+          placeholder="Enter GST number"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="editCountry">Country</label>
+        <input
+          type="text"
+          id="editCountry"
+          [(ngModel)]="editOrganization.country"
+          name="editCountry"
+          placeholder="Enter country"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="editPlan">Plan</label>
+        <select
+          id="editPlan"
+          [(ngModel)]="editOrganization.plan"
+          name="editPlan"
+        >
+          <option value="">Select a plan</option>
+          <option value="Free">Free</option>
+          <option value="Basic">Basic</option>
+          <option value="Pro">Pro</option>
+          <option value="Enterprise">Enterprise</option>
+        </select>
+      </div>
+
+      <div class="form-actions">
+        <button type="submit" class="btn btn-primary" [disabled]="isLoading">
+          {{ isLoading ? "Updating..." : "Update Organization" }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="cancelForm()"
+          [disabled]="isLoading"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <!-- Organizations List -->
+  <div
+    class="organizations-list"
+    *ngIf="!showCreateForm && !showEditForm && !isLoading"
+  >
+    <table class="data-table">
+      <thead>
+        <tr>
+          <th>Name</th>
+          <th>Industry</th>
+          <th>Country</th>
+          <th>GST Number</th>
+          <th>Plan</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr *ngFor="let org of organizations">
+          <td>{{ org.name }}</td>
+          <td>{{ org.industry || "N/A" }}</td>
+          <td>{{ org.country || "N/A" }}</td>
+          <td>{{ org.gstNumber || "N/A" }}</td>
+          <td>{{ org.plan || "N/A" }}</td>
+          <td>
+            <div class="action-buttons">
+              <button
+                class="btn btn-small btn-info"
+                (click)="viewOrganizationDetails(org.id!)"
+                title="View Details"
+              >
+                👁️ View
+              </button>
+              <button
+                class="btn btn-small btn-warning"
+                (click)="openEditForm(org)"
+                title="Edit Organization"
+              >
+                ✏️ Edit
+              </button>
+            </div>
+          </td>
+        </tr>
+        <tr *ngIf="organizations.length === 0">
+          <td colspan="6" class="no-data">
+            No organizations found. Create your first organization!
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+
+  <!-- Organization Details Modal -->
+  <div
+    class="modal-overlay"
+    *ngIf="selectedOrganization && !showEditForm"
+    (click)="closeDetails()"
+  >
+    <div class="modal-content" (click)="$event.stopPropagation()">
+      <div class="modal-header">
+        <h2>Organization Details</h2>
+        <button class="close-btn" (click)="closeDetails()">×</button>
+      </div>
+      <div class="modal-body">
+        <div class="detail-row">
+          <span class="label">ID:</span>
+          <span class="value">{{ selectedOrganization.id }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Name:</span>
+          <span class="value">{{ selectedOrganization.name }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Industry:</span>
+          <span class="value">{{
+            selectedOrganization.industry || "Not provided"
+          }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Country:</span>
+          <span class="value">{{
+            selectedOrganization.country || "Not provided"
+          }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">GST Number:</span>
+          <span class="value">{{
+            selectedOrganization.gstNumber || "Not provided"
+          }}</span>
+        </div>
+        <div class="detail-row">
+          <span class="label">Plan:</span>
+          <span class="value">{{
+            selectedOrganization.plan || "Not provided"
+          }}</span>
+        </div>
+        <div class="detail-row" *ngIf="selectedOrganization.createdAt">
+          <span class="label">Created At:</span>
+          <span class="value">{{
+            selectedOrganization.createdAt | date : "medium"
+          }}</span>
+        </div>
+      </div>
+      <div class="modal-footer">
+        <button
+          class="btn btn-primary"
+          (click)="openEditForm(selectedOrganization)"
+        >
+          Edit Organization
+        </button>
+        <button class="btn btn-secondary" (click)="closeDetails()">
+          Close
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
