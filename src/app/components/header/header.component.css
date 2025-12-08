@@ -12,3 +12,43 @@
     font-weight: 700;
     margin: 0;
 }
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: 24px;
+}
+
+.date {
+    color: #718096;
+    font-size: 14px;
+}
+
+.user-menu {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.user-name {
+    color: #2d3748;
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.logout-btn {
+    padding: 8px 16px;
+    background: #667eea;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.logout-btn:hover {
+    background: #764ba2;
+    transform: translateY(-1px);
+}

@@ -1,12 +1,14 @@
 import { Component, Input } from '@angular/core';
 import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { AuthStateService } from '../../services/auth-state.service';
 
 @Component({
   selector: 'app-header',
   standalone: true,
   imports: [CommonModule],
   templateUrl: './header.component.html',
-  styleUrls: ['./header.component.css']
+  styleUrls: ['./header.component.css'],
 })
 export class HeaderComponent {
   @Input() title: string = '';
@@ -17,6 +19,18 @@ export class HeaderComponent {
     weekday: 'long',
     year: 'numeric',
     month: 'long',
-    day: 'numeric'
+    day: 'numeric',
   });
+
+  currentUser$ = this.authStateService.currentUser;
+
+  constructor(
+    private authStateService: AuthStateService,
+    private router: Router
+  ) {}
+
+  logout(): void {
+    this.authStateService.logout();
+    this.router.navigate(['/login']);
+  }
 }

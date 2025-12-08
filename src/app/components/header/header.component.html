@@ -1,6 +1,10 @@
 <header class="header">
   <h1 class="header-title">{{ title }}</h1>
-  <div>
-    <span>{{ currentDate }}</span>
+  <div class="header-right">
+    <span class="date">{{ currentDate }}</span>
+    <div class="user-menu" *ngIf="currentUser$ | async as user">
+      <span class="user-name">{{ user?.firstName || user?.email }}</span>
+      <button class="logout-btn" (click)="logout()">Logout</button>
+    </div>
   </div>
 </header>
