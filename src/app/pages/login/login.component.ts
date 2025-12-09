@@ -8,6 +8,7 @@ import {
 } from '@angular/forms';
 import { Router, RouterModule } from '@angular/router';
 import { AuthService } from '../../api/api/auth.service';
+import { UsersService } from '../../api/api/users.service';
 import { LoginRequest } from '../../api/model/loginRequest';
 import { AuthStateService } from '../../services/auth-state.service';
 
@@ -27,6 +28,7 @@ export class LoginComponent {
   constructor(
     private fb: FormBuilder,
     private authService: AuthService,
+    private usersService: UsersService,
     private authStateService: AuthStateService,
     private router: Router
   ) {
@@ -48,6 +50,17 @@ export class LoginComponent {
     this.showPassword = !this.showPassword;
   }
 
+  private decodeToken(token: string): any {
+    try {
+      const payload = token.split('.')[1];
+      const decoded = atob(payload.replace(/-/g, '+').replace(/_/g, '/'));
+      return JSON.parse(decoded);
+    } catch (error) {
+      console.error('Error decoding token:', error);
+      return null;
+    }
+  }
+
   onSubmit() {
     if (this.loginForm.valid) {
       this.isLoading = true;
@@ -62,16 +75,36 @@ export class LoginComponent {
         next: (response) => {
           console.log('Login successful', response);
 
-          // Store token and user using AuthStateService
+          // Store token
           if (response?.token) {
             this.authStateService.setToken(response.token);
-          }
-          if (response?.user) {
-            this.authStateService.setUser(response.user);
-          }
 
-          this.isLoading = false;
-          this.router.navigate(['/dashboard']);
+            // Decode token to get userId
+            const decodedToken = this.decodeToken(response.token);
+            const userId = decodedToken?.sub;
+
+            if (userId) {
+              // Call user API to get full user details
+              this.usersService.apiV1UsersIdGet(userId).subscribe({
+                next: (userDetails) => {
+                  this.authStateService.setUser(userDetails);
+                  this.isLoading = false;
+                  this.router.navigate(['/dashboard']);
+                },
+                error: (userError) => {
+                  console.error('Error fetching user details:', userError);
+                  this.isLoading = false;
+                  this.errorMessage = 'Failed to load user details. Please try again.';
+                }
+              });
+            } else {
+              this.isLoading = false;
+              this.errorMessage = 'Invalid token. Please try again.';
+            }
+          } else {
+            this.isLoading = false;
+            this.errorMessage = 'No token received. Please try again.';
+          }
         },
         error: (error) => {
           console.error('Login error', error);

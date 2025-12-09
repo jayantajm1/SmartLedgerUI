@@ -2,8 +2,11 @@
 import { isPlatformBrowser } from "@angular/common";
 import { CommonModule } from "@angular/common";
 import { HeaderComponent } from "../../components/header/header.component";
-import { DataService } from "../../services/data.service";
-import { Invoice } from "../../models/invoice.model";
+import { InvoiceService } from "../../api/api/invoice.service";
+import { VendorService } from "../../api/api/vendor.service";
+import { AuthStateService } from "../../services/auth-state.service";
+import { Invoice } from "../../api/model/invoice";
+import { Vendor } from "../../api/model/vendor";
 import { Chart, registerables } from "chart.js";
 import { Subscription } from "rxjs";
 
@@ -26,9 +29,12 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   private inflowChart: any;
   private subscriptions: Subscription[] = [];
   private isBrowser: boolean;
+  private orgId: string | null = null;
 
   constructor(
-    private dataService: DataService,
+    private invoiceService: InvoiceService,
+    private vendorService: VendorService,
+    private authStateService: AuthStateService,
     @Inject(PLATFORM_ID) platformId: Object
   ) {
     this.isBrowser = isPlatformBrowser(platformId);
@@ -36,10 +42,14 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
 
   ngOnInit(): void {
     this.subscriptions.push(
-      this.dataService.invoices$.subscribe(() => this.updateDashboard())
-    );
-    this.subscriptions.push(
-      this.dataService.vendors$.subscribe(() => this.updateDashboard())
+      this.authStateService.currentUser.subscribe((user: any) => {
+        if (user?.orgId) {
+          this.orgId = user.orgId;
+          this.loadDashboardData();
+        } else {
+          // Handle case where orgId is not available
+        }
+      })
     );
   }
 
@@ -56,6 +66,34 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
     this.subscriptions.forEach(sub => sub.unsubscribe());
     if (this.monthlyChart) this.monthlyChart.destroy();
     if (this.inflowChart) this.inflowChart.destroy();
+  }
+
+  private loadDashboardData(): void {
+    if (!this.orgId) return;
+
+    // Load invoices for the organization
+    this.invoiceService.apiV1InvoicesOrgIdGet(this.orgId).subscribe({
+      next: (invoices) => {
+        this.overdueInvoices = invoices.filter((inv: Invoice) =>
+          inv.status === "Pending" && new Date(inv.dueDate || '') < new Date()
+        );
+        this.totalInvoices = invoices.length;
+        this.monthlySpend = invoices
+          .filter((inv: Invoice) => new Date(inv.dueDate || '').getMonth() === new Date().getMonth())
+          .reduce((sum: number, inv: Invoice) => sum + (inv.totalAmount || 0), 0);
+        this.updateDashboard();
+      },
+      error: (err) => console.error('Error loading invoices:', err)
+    });
+
+    // Load vendors for the organization
+    this.vendorService.apiVendorsOrgIdGet(this.orgId).subscribe({
+      next: (vendors) => {
+        this.totalVendors = vendors.length;
+        this.updateDashboard();
+      },
+      error: (err) => console.error('Error loading vendors:', err)
+    });
   }
 
   private initializeCharts(): void {
@@ -140,23 +178,10 @@ export class DashboardComponent implements OnInit, AfterViewInit, OnDestroy {
   }
 
   private updateDashboard(): void {
-    const invoices = this.dataService.getInvoices();
-    const vendors = this.dataService.getVendors();
-
-    // Calculate monthly spend
-    const currentMonth = new Date().getMonth();
-    this.monthlySpend = invoices
-      .filter(inv => new Date(inv.due_date).getMonth() === currentMonth)
-      .reduce((sum, inv) => sum + inv.amount, 0);
-
-    // Update overdue invoices
-    const today = new Date();
-    this.overdueInvoices = invoices.filter(inv =>
-      inv.status === "Unpaid" && new Date(inv.due_date) < today
-    );
-
-    // Update quick stats
-    this.totalInvoices = invoices.length;
-    this.totalVendors = vendors.length;
+    // Data is already loaded in loadDashboardData
+    // Update charts if needed
+    if (this.monthlyChart) {
+      // Update chart data here if dynamic
+    }
   }
 }

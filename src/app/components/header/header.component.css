@@ -34,6 +34,13 @@
     color: #2d3748;
     font-weight: 600;
     font-size: 14px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.connected-icon {
+    font-size: 12px;
 }
 
 .logout-btn {

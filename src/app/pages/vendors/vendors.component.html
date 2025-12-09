@@ -254,6 +254,29 @@
         <span class="label">Total Invoices:</span>
         <span class="value">{{ selectedVendor.invoices.length }}</span>
       </div>
+
+      <!-- Invoices Section -->
+      <div *ngIf="selectedVendor.invoices && selectedVendor.invoices.length > 0" class="invoices-section">
+        <h3 style="margin-top: 20px; margin-bottom: 10px; color: #374151;">Invoices</h3>
+        <table class="table table-sm">
+          <thead>
+            <tr>
+              <th>Invoice Number</th>
+              <th>Amount</th>
+              <th>Status</th>
+              <th>Due Date</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let invoice of selectedVendor.invoices">
+              <td>{{ invoice.invoiceNumber }}</td>
+              <td>{{ invoice.totalAmount | currency }}</td>
+              <td>{{ invoice.status }}</td>
+              <td>{{ invoice.dueDate | date }}</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
     </div>
 
     <div

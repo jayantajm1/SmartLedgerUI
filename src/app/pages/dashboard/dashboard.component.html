@@ -34,10 +34,10 @@
         <p *ngIf="overdueInvoices.length === 0">No overdue invoices</p>
         <div *ngFor="let invoice of overdueInvoices" class="invoice-item">
           <div class="invoice-info">
-            <div class="invoice-vendor">{{ invoice.vendor }}</div>
-            <div class="invoice-due">Due: {{ invoice.due_date | date }}</div>
+            <div class="invoice-vendor">{{ invoice.vendor?.name }}</div>
+            <div class="invoice-due">Due: {{ invoice.dueDate | date }}</div>
           </div>
-          <div class="invoice-amount">{{ invoice.amount | currency }}</div>
+          <div class="invoice-amount">{{ invoice.totalAmount | currency }}</div>
         </div>
       </div>
     </div>
