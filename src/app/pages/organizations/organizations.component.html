@@ -1,13 +1,6 @@
 <div class="organizations-container">
   <div class="header">
-    <h1>Organizations Management</h1>
-    <button
-      class="btn btn-primary"
-      (click)="openCreateForm()"
-      *ngIf="!showCreateForm && !showEditForm"
-    >
-      <span class="icon">+</span> Create Organization
-    </button>
+    <h1>Organization Details</h1>
   </div>
 
   <!-- Loading State -->
@@ -186,119 +179,56 @@
     </form>
   </div>
 
-  <!-- Organizations List -->
-  <div
-    class="organizations-list"
-    *ngIf="!showCreateForm && !showEditForm && !isLoading"
-  >
-    <table class="data-table">
-      <thead>
-        <tr>
-          <th>Name</th>
-          <th>Industry</th>
-          <th>Country</th>
-          <th>GST Number</th>
-          <th>Plan</th>
-          <th>Actions</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr *ngFor="let org of organizations">
-          <td>{{ org.name }}</td>
-          <td>{{ org.industry || "N/A" }}</td>
-          <td>{{ org.country || "N/A" }}</td>
-          <td>{{ org.gstNumber || "N/A" }}</td>
-          <td>{{ org.plan || "N/A" }}</td>
-          <td>
-            <div class="action-buttons">
-              <button
-                class="btn btn-small btn-info"
-                (click)="viewOrganizationDetails(org.id!)"
-                title="View Details"
-              >
-                👁️ View
-              </button>
-              <button
-                class="btn btn-small btn-warning"
-                (click)="openEditForm(org)"
-                title="Edit Organization"
-              >
-                ✏️ Edit
-              </button>
-            </div>
-          </td>
-        </tr>
-        <tr *ngIf="organizations.length === 0">
-          <td colspan="6" class="no-data">
-            No organizations found. Create your first organization!
-          </td>
-        </tr>
-      </tbody>
-    </table>
-  </div>
-
-  <!-- Organization Details Modal -->
-  <div
-    class="modal-overlay"
-    *ngIf="selectedOrganization && !showEditForm"
-    (click)="closeDetails()"
-  >
-    <div class="modal-content" (click)="$event.stopPropagation()">
-      <div class="modal-header">
-        <h2>Organization Details</h2>
-        <button class="close-btn" (click)="closeDetails()">×</button>
+  <!-- Organization Details -->
+  <div class="organization-details" *ngIf="!showCreateForm && !showEditForm && !isLoading && organizations.length > 0">
+    <div class="details-card">
+      <div class="card-header">
+        <h2>{{ organizations[0].name }}</h2>
+        <button
+          class="btn btn-warning"
+          (click)="openEditForm(organizations[0])"
+          [disabled]="isLoading"
+        >
+          ✏️ Edit
+        </button>
       </div>
-      <div class="modal-body">
+      <div class="card-body">
         <div class="detail-row">
           <span class="label">ID:</span>
-          <span class="value">{{ selectedOrganization.id }}</span>
+          <span class="value">{{ organizations[0].id }}</span>
         </div>
         <div class="detail-row">
           <span class="label">Name:</span>
-          <span class="value">{{ selectedOrganization.name }}</span>
+          <span class="value">{{ organizations[0].name }}</span>
         </div>
         <div class="detail-row">
           <span class="label">Industry:</span>
-          <span class="value">{{
-            selectedOrganization.industry || "Not provided"
-          }}</span>
+          <span class="value">{{ organizations[0].industry || "N/A" }}</span>
         </div>
         <div class="detail-row">
           <span class="label">Country:</span>
-          <span class="value">{{
-            selectedOrganization.country || "Not provided"
-          }}</span>
+          <span class="value">{{ organizations[0].country || "N/A" }}</span>
         </div>
         <div class="detail-row">
           <span class="label">GST Number:</span>
-          <span class="value">{{
-            selectedOrganization.gstNumber || "Not provided"
-          }}</span>
+          <span class="value">{{ organizations[0].gstNumber || "N/A" }}</span>
         </div>
         <div class="detail-row">
           <span class="label">Plan:</span>
-          <span class="value">{{
-            selectedOrganization.plan || "Not provided"
-          }}</span>
+          <span class="value">{{ organizations[0].plan || "N/A" }}</span>
         </div>
-        <div class="detail-row" *ngIf="selectedOrganization.createdAt">
+        <div class="detail-row" *ngIf="organizations[0].createdAt">
           <span class="label">Created At:</span>
-          <span class="value">{{
-            selectedOrganization.createdAt | date : "medium"
-          }}</span>
+          <span class="value">{{ organizations[0].createdAt | date:'medium' }}</span>
         </div>
-      </div>
-      <div class="modal-footer">
-        <button
-          class="btn btn-primary"
-          (click)="openEditForm(selectedOrganization)"
-        >
-          Edit Organization
-        </button>
-        <button class="btn btn-secondary" (click)="closeDetails()">
-          Close
-        </button>
       </div>
     </div>
   </div>
+
+  <!-- No Organization Message -->
+  <div class="no-data" *ngIf="!showCreateForm && !showEditForm && !isLoading && organizations.length === 0 && !error">
+    <p>No organization found for your account.</p>
+  </div>
+
+
 </div>

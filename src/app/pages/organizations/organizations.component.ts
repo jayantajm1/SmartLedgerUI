@@ -1,10 +1,11 @@
-import { Component, OnInit } from '@angular/core';
+import { Component, OnInit, OnDestroy } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrganizationService } from '../../api/api/organization.service';
 import { AuthStateService } from '../../services/auth-state.service';
 import { Organization } from '../../api/model/organization';
 import { OrganizationCreateDto } from '../../api/model/organizationCreateDto';
+import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'app-organizations',
@@ -13,7 +14,7 @@ import { OrganizationCreateDto } from '../../api/model/organizationCreateDto';
   templateUrl: './organizations.component.html',
   styleUrls: ['./organizations.component.css'],
 })
-export class OrganizationsComponent implements OnInit {
+export class OrganizationsComponent implements OnInit, OnDestroy {
   organizations: Organization[] = [];
   selectedOrganization: Organization | null = null;
   isLoading = false;
@@ -41,44 +42,48 @@ export class OrganizationsComponent implements OnInit {
     plan: '',
   };
 
+  private subscription?: Subscription;
+  private orgId: string | null = null;
+
   constructor(
     private organizationService: OrganizationService,
     private authStateService: AuthStateService
   ) {}
 
   ngOnInit(): void {
-    this.loadOrganizations();
+    this.subscription = this.authStateService.currentUser.subscribe(
+      (user: any) => {
+        if (user?.orgId) {
+          this.orgId = user.orgId;
+          this.loadOrganizations();
+        } else {
+          this.error = 'Organization ID not found. Please log in again.';
+        }
+      }
+    );
+  }
+
+  ngOnDestroy(): void {
+    this.subscription?.unsubscribe();
   }
 
   loadOrganizations(): void {
+    if (!this.orgId) {
+      this.error = 'Organization ID not found.';
+      return;
+    }
+
     this.isLoading = true;
     this.error = null;
 
-    this.organizationService.apiV1OrganizationsGet().subscribe({
+    this.organizationService.apiV1OrganizationsIdGet(this.orgId).subscribe({
       next: (data) => {
-        this.organizations = data;
+        this.organizations = [data]; // Wrap in array to maintain compatibility
         this.isLoading = false;
       },
       error: (err) => {
-        console.error('Error loading organizations:', err);
-        this.error = 'Failed to load organizations. Please try again.';
-        this.isLoading = false;
-      },
-    });
-  }
-
-  viewOrganizationDetails(id: string): void {
-    this.isLoading = true;
-    this.error = null;
-
-    this.organizationService.apiV1OrganizationsIdGet(id).subscribe({
-      next: (data) => {
-        this.selectedOrganization = data;
-        this.isLoading = false;
-      },
-      error: (err) => {
-        console.error('Error loading organization details:', err);
-        this.error = 'Failed to load organization details.';
+        console.error('Error loading organization:', err);
+        this.error = 'Failed to load organization. Please try again.';
         this.isLoading = false;
       },
     });
@@ -187,9 +192,5 @@ export class OrganizationsComponent implements OnInit {
     this.showEditForm = false;
     this.selectedOrganization = null;
     this.error = null;
-  }
-
-  closeDetails(): void {
-    this.selectedOrganization = null;
   }
 }
