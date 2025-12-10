@@ -99,6 +99,66 @@
     </form>
   </div>
 
+  <!-- Create User Form -->
+  <div class="form-container" *ngIf="showCreateUserForm">
+    <h2>Create New User</h2>
+    <form (ngSubmit)="createUser()">
+      <div class="form-group">
+        <label for="userName">Full Name *</label>
+        <input
+          type="text"
+          id="userName"
+          [(ngModel)]="newUser.name"
+          name="userName"
+          required
+          placeholder="Enter user's full name"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="userEmail">Email Address *</label>
+        <input
+          type="email"
+          id="userEmail"
+          [(ngModel)]="newUser.email"
+          name="userEmail"
+          required
+          placeholder="Enter user's email address"
+        />
+      </div>
+
+      <div class="form-group">
+        <label for="userPassword">Password *</label>
+        <input
+          type="password"
+          id="userPassword"
+          [(ngModel)]="newUser.password"
+          name="userPassword"
+          required
+          placeholder="Enter a secure password"
+        />
+      </div>
+
+      <div class="form-actions">
+        <button
+          type="submit"
+          class="btn btn-primary"
+          [disabled]="isLoading"
+        >
+          {{ isLoading ? 'Creating...' : 'Create User' }}
+        </button>
+        <button
+          type="button"
+          class="btn btn-secondary"
+          (click)="cancelForm()"
+          [disabled]="isLoading"
+        >
+          Cancel
+        </button>
+      </div>
+    </form>
+  </div>
+
   <!-- Edit Organization Form -->
   <div class="form-container" *ngIf="showEditForm && selectedOrganization">
     <h2>Edit Organization</h2>
@@ -180,17 +240,26 @@
   </div>
 
   <!-- Organization Details -->
-  <div class="organization-details" *ngIf="!showCreateForm && !showEditForm && !isLoading && organizations.length > 0">
+  <div class="organization-details" *ngIf="!showCreateForm && !showEditForm && !showCreateUserForm && !isLoading && organizations.length > 0">
     <div class="details-card">
       <div class="card-header">
         <h2>{{ organizations[0].name }}</h2>
-        <button
-          class="btn btn-warning"
-          (click)="openEditForm(organizations[0])"
-          [disabled]="isLoading"
-        >
-          ✏️ Edit
-        </button>
+        <div class="header-actions">
+          <button
+            class="btn btn-primary"
+            (click)="openCreateUserForm()"
+            [disabled]="isLoading"
+          >
+            👤 Create User
+          </button>
+          <button
+            class="btn btn-warning"
+            (click)="openEditForm(organizations[0])"
+            [disabled]="isLoading"
+          >
+            ✏️ Edit
+          </button>
+        </div>
       </div>
       <div class="card-body">
         <div class="detail-row">
@@ -226,7 +295,7 @@
   </div>
 
   <!-- No Organization Message -->
-  <div class="no-data" *ngIf="!showCreateForm && !showEditForm && !isLoading && organizations.length === 0 && !error">
+  <div class="no-data" *ngIf="!showCreateForm && !showEditForm && !showCreateUserForm && !isLoading && organizations.length === 0 && !error">
     <p>No organization found for your account.</p>
   </div>
 

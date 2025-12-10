@@ -3,6 +3,8 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { OrganizationService } from '../../api/api/organization.service';
 import { AuthStateService } from '../../services/auth-state.service';
+import { AuthService } from '../../api/services/AuthService';
+import { AuthClient, RegisterRequest } from '../../api/nswag-client';
 import { Organization } from '../../api/model/organization';
 import { OrganizationCreateDto } from '../../api/model/organizationCreateDto';
 import { Subscription } from 'rxjs';
@@ -24,6 +26,7 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
   // Form states
   showCreateForm = false;
   showEditForm = false;
+  showCreateUserForm = false;
 
   // Form data
   newOrganization: OrganizationCreateDto = {
@@ -42,12 +45,21 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
     plan: '',
   };
 
+  // User creation form data
+  newUser: RegisterRequest = {
+    name: '',
+    email: '',
+    password: '',
+  };
+
   private subscription?: Subscription;
   private orgId: string | null = null;
 
   constructor(
     private organizationService: OrganizationService,
-    private authStateService: AuthStateService
+    private authStateService: AuthStateService,
+    private authService: AuthService,
+    private authClient: AuthClient
   ) {}
 
   ngOnInit(): void {
@@ -190,7 +202,101 @@ export class OrganizationsComponent implements OnInit, OnDestroy {
   cancelForm(): void {
     this.showCreateForm = false;
     this.showEditForm = false;
+    this.showCreateUserForm = false;
     this.selectedOrganization = null;
     this.error = null;
+  }
+
+  openCreateUserForm(): void {
+    this.showCreateUserForm = true;
+    this.showCreateForm = false;
+    this.showEditForm = false;
+    this.error = null;
+    this.successMessage = null;
+    this.newUser = {
+      name: '',
+      email: '',
+      password: '',
+    };
+  }
+
+  createUser(): void {
+    if (!this.newUser.name || !this.newUser.email || !this.newUser.password) {
+      this.error = 'Name, email, and password are required.';
+      return;
+    }
+
+    if (!this.orgId) {
+      this.error = 'Organization ID not found.';
+      return;
+    }
+
+    this.isLoading = true;
+    this.error = null;
+
+    // Get current user ID for the create-user API
+    const currentUser = this.authStateService.currentUserValue;
+    const userId = currentUser?.id;
+
+    // Call the create-user endpoint using AuthService
+    this.authService
+      .postApiV1AuthCreateUser(userId, this.newUser)
+      .subscribe({
+        next: (response: any) => {
+          // Check if the response indicates successful user creation
+          if (response || response === null || response === undefined) {
+            // The API returns success for status 200, so any response in the success callback is good
+            this.successMessage = 'User created successfully for the organization!';
+            this.showCreateUserForm = false;
+            // Reset the form
+            this.newUser = {
+              name: '',
+              email: '',
+              password: '',
+            };
+            this.loadOrganizations(); // Refresh the organizations list
+            this.isLoading = false;
+            setTimeout(() => (this.successMessage = null), 3000);
+          } else {
+            // If response doesn't match expected success format
+            this.error = 'User creation completed but response format unexpected.';
+            this.isLoading = false;
+          }
+        },
+        error: (err: any) => {
+          console.error('Error creating user:', err);
+          let errorMessage = 'Failed to create user. Please try again.';
+
+          // Check for specific error status codes
+          if (err?.status) {
+            switch (err.status) {
+              case 400:
+                errorMessage = 'Invalid user data. Please check the form fields.';
+                break;
+              case 401:
+                errorMessage = 'Unauthorized. Please log in again.';
+                break;
+              case 403:
+                errorMessage = 'You do not have permission to create users for this organization.';
+                break;
+              case 409:
+                errorMessage = 'A user with this email already exists.';
+                break;
+              case 500:
+                errorMessage = 'Server error. Please try again later.';
+                break;
+              default:
+                errorMessage = `Error ${err.status}: ${err.statusText || 'Unknown error'}`;
+            }
+          } else if (err?.error?.message) {
+            errorMessage = err.error.message;
+          } else if (err?.message) {
+            errorMessage = err.message;
+          }
+
+          this.error = errorMessage;
+          this.isLoading = false;
+        },
+      });
   }
 }

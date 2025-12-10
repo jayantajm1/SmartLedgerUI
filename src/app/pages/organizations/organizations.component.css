@@ -25,6 +25,11 @@
   font-weight: 600;
 }
 
+.header-actions {
+  display: flex;
+  gap: 10px;
+}
+
 .card-body {
   padding: 20px;
 }
